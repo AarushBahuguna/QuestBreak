@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}QuestBreak — Discover Your Story{% endblock %}
+
+{% block content %}
+<div class="questionnaire-page">
+    <div class="quest-header">
+        <a href="{{ url_for('landing') }}" class="back-link">← Back</a>
+        <h1>The Initiation</h1>
+        <p class="quest-subtitle">Answer truthfully — your destiny depends on it.</p>
+    </div>
+
+    <div class="progress-container">
+        <div class="progress-bar" id="quiz-progress">
+            <div class="progress-fill" style="width: 0%"></div>
+        </div>
+        <span class="progress-text" id="progress-text">Question 1 of {{ questions|length }}</span>
+    </div>
+
+    <div class="questions-container" id="questions-container">
+        {% for q in questions %}
+        {% set q_index = loop.index0 %}
+        <div class="question-slide glass-card {% if loop.first %}active{% endif %}" data-index="{{ q_index }}">
+            <div class="question-narrative">{{ q.narrative }}</div>
+            <h2 class="question-text">{{ q.question }}</h2>
+            <div class="options-grid">
+                {% for opt in q.options %}
+                <button class="option-btn" data-question="{{ loop.index0 }}" data-answer="{{ opt.label }}"
+                        onclick="selectOption(this, {{ q_index }}, '{{ opt.label }}')">
+                    <span class="option-label">{{ opt.label }}</span>
+                    <span class="option-text">{{ opt.text }}</span>
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="quiz-nav">
+        <button class="btn-secondary" id="prev-btn" onclick="prevQuestion()" style="visibility: hidden;">← Previous</button>
+        <button class="btn-primary" id="next-btn" onclick="nextQuestion()" disabled>Next →</button>
+    </div>
+
+    <!-- Result overlay -->
+    <div class="result-overlay" id="result-overlay" style="display: none;">
+        <div class="result-card glass-card">
+            <div class="result-emoji" id="result-emoji">🔮</div>
+            <h2 id="result-title">Loading your destiny...</h2>
+            <p id="result-description"></p>
+            <a class="btn-primary" id="result-link" href="#">Enter Your Story →</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const totalQuestions = {{ questions|length }};
+    let currentQuestion = 0;
+    let answers = new Array(totalQuestions).fill(null);
+
+    function selectOption(btn, questionIndex, answer) {
+        const slide = btn.closest('.question-slide');
+        slide.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        answers[questionIndex] = answer;
+        document.getElementById('next-btn').disabled = false;
+    }
+
+    function nextQuestion() {
+        if (answers[currentQuestion] === null) return;
+
+        if (currentQuestion === totalQuestions - 1) {
+            submitQuiz();
+            return;
+        }
+
+        const slides = document.querySelectorAll('.question-slide');
+        slides[currentQuestion].classList.remove('active');
+        slides[currentQuestion].classList.add('exit-left');
+
+        currentQuestion++;
+
+        slides[currentQuestion].classList.add('active');
+        updateUI();
+    }
+
+    function prevQuestion() {
+        if (currentQuestion === 0) return;
+
+        const slides = document.querySelectorAll('.question-slide');
+        slides[currentQuestion].classList.remove('active');
+
+        currentQuestion--;
+
+        slides[currentQuestion].classList.remove('exit-left');
+        slides[currentQuestion].classList.add('active');
+        updateUI();
+    }
+
+    function updateUI() {
+        const pct = ((currentQuestion + 1) / totalQuestions) * 100;
+        document.querySelector('.progress-fill').style.width = pct + '%';
+        document.getElementById('progress-text').textContent =
+            `Question ${currentQuestion + 1} of ${totalQuestions}`;
+
+        document.getElementById('prev-btn').style.visibility =
+            currentQuestion > 0 ? 'visible' : 'hidden';
+
+        document.getElementById('next-btn').textContent =
+            currentQuestion === totalQuestions - 1 ? 'Discover My Story →' : 'Next →';
+
+        document.getElementById('next-btn').disabled = answers[currentQuestion] === null;
+    }
+
+    function submitQuiz() {
+        document.getElementById('next-btn').disabled = true;
+        document.getElementById('next-btn').textContent = 'Analyzing...';
+
+        fetch('/submit_questionnaire', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ answers: answers })
+        })
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('result-overlay').style.display = 'flex';
+            document.getElementById('result-emoji').textContent = data.story_emoji;
+            document.getElementById('result-title').textContent = data.story_title;
+            document.getElementById('result-description').textContent = data.story_description;
+            document.getElementById('result-link').href = '/story/' + data.story_id;
+        })
+        .catch(err => {
+            console.error(err);
+            document.getElementById('next-btn').textContent = 'Error! Try again';
+            document.getElementById('next-btn').disabled = false;
+        });
+    }
+</script>
+{% endblock %}

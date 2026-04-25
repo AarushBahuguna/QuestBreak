@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+{% block title %}{{ story.title }} — Chapter: {{ chapter.title }}{% endblock %}
+
+{% block content %}
+<div class="story-page">
+    <div class="story-header">
+        <div class="story-header-left">
+            <span class="story-emoji-sm">{{ story.emoji }}</span>
+            <span class="story-title-sm">{{ story.title }}</span>
+        </div>
+        <div class="story-header-right">
+            <span class="points-badge">⚡ {{ total_points }} pts</span>
+            <button class="btn-exit" onclick="exitGame()" title="Exit Quest">✕ Exit</button>
+        </div>
+    </div>
+
+    <!-- Exit confirmation modal -->
+    <div class="exit-overlay" id="exit-overlay" style="display: none;">
+        <div class="exit-card glass-card">
+            <div class="exit-icon">⚠️</div>
+            <h2>Leave this quest?</h2>
+            <p>Your progress for this chapter will be lost, but your earned points are saved.</p>
+            <div class="exit-actions">
+                <a href="{{ url_for('dashboard') }}" class="btn-primary btn-exit-confirm">Yes, Exit to Dashboard</a>
+                <button class="btn-secondary" onclick="cancelExit()">Keep Playing</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="progress-container">
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: {{ progress.percent }}%"></div>
+        </div>
+        <span class="progress-text">Chapter {{ progress.current }} of {{ progress.total }}</span>
+    </div>
+
+    <div class="chapter-container glass-card">
+        <div class="chapter-header">
+            <h1 class="chapter-title">{{ chapter.title }}</h1>
+            <span class="difficulty-badge difficulty-{{ chapter.difficulty }}">
+                {% for i in range(chapter.difficulty) %}★{% endfor %}
+                {% for i in range(3 - chapter.difficulty) %}☆{% endfor %}
+            </span>
+        </div>
+
+        <div class="narrative-box" id="narrative-box">
+            <div class="narrative-text" id="narrative-text">{{ chapter.narrative }}</div>
+        </div>
+
+        <div class="challenge-box">
+            <h3>🎯 Challenge</h3>
+            <p class="challenge-text">{{ chapter.challenge }}</p>
+            <span class="points-label">+{{ chapter.points }} points</span>
+        </div>
+
+        <form id="answer-form" class="answer-form" enctype="multipart/form-data" onsubmit="return false;">
+            <input type="hidden" name="story_id" value="{{ story.id }}">
+            <input type="hidden" name="chapter_id" value="{{ chapter.id }}">
+            <input type="hidden" name="answer_type" value="{{ chapter.answer_type }}">
+
+            {% if chapter.answer_type == "image" %}
+            <div class="image-upload-area" id="upload-area">
+                <div class="upload-icon">📷</div>
+                <p>Click to upload a photo or drag & drop</p>
+                <input type="file" name="image" id="image-input" accept="image/*" capture="environment"
+                       onchange="previewImage(this)">
+                <div class="image-preview" id="image-preview" style="display: none;">
+                    <img id="preview-img" src="" alt="Preview">
+                    <button type="button" class="remove-img" onclick="removeImage()">✕</button>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-answer-area">
+                <textarea name="answer" id="answer-input" placeholder="Type your answer here..."
+                          rows="3" required></textarea>
+            </div>
+            {% endif %}
+
+            <button type="button" class="btn-primary submit-btn" id="submit-btn"
+                    onclick="submitAnswer()">
+                Submit Answer
+            </button>
+        </form>
+
+        <!-- Feedback overlay -->
+        <div class="feedback-overlay" id="feedback-overlay" style="display: none;">
+            <div class="feedback-card" id="feedback-card">
+                <div class="feedback-icon" id="feedback-icon">✅</div>
+                <h2 id="feedback-title">Result</h2>
+                <p id="feedback-text"></p>
+                <div class="feedback-points" id="feedback-points"></div>
+                <div class="feedback-actions">
+                    <button class="btn-primary" id="feedback-next-btn" style="display: none;"
+                            onclick="goToNext()">Continue →</button>
+                    <button class="btn-secondary" id="feedback-hint-btn" style="display: none;"
+                            onclick="showHint()">Show Hint</button>
+                    <button class="btn-secondary" id="feedback-retry-btn" style="display: none;"
+                            onclick="retryChapter()">Try Again</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let nextChapterUrl = null;
+    const storyId = "{{ story.id }}";
+    const chapterHint = {{ chapter.hint | tojson }};
+
+    function previewImage(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('preview-img').src = e.target.result;
+                document.getElementById('image-preview').style.display = 'block';
+                document.querySelector('.upload-icon').style.display = 'none';
+                document.querySelector('#upload-area > p').style.display = 'none';
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function removeImage() {
+        document.getElementById('image-input').value = '';
+        document.getElementById('image-preview').style.display = 'none';
+        document.querySelector('.upload-icon').style.display = 'block';
+        document.querySelector('#upload-area > p').style.display = 'block';
+    }
+
+    function submitAnswer() {
+        const btn = document.getElementById('submit-btn');
+        const answerType = document.querySelector('input[name="answer_type"]').value;
+
+        // Validate before submitting
+        if (answerType === 'image') {
+            const fileInput = document.getElementById('image-input');
+            if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                alert('Please upload an image first!');
+                return;
+            }
+        } else {
+            const textInput = document.getElementById('answer-input');
+            if (!textInput || !textInput.value.trim()) {
+                alert('Please type your answer first!');
+                return;
+            }
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Checking...';
+
+        const form = document.getElementById('answer-form');
+        const formData = new FormData(form);
+
+        fetch('/submit_answer', {
+            method: 'POST',
+            body: formData
+        })
+        .then(r => r.json())
+        .then(data => {
+            showFeedback(data);
+        })
+        .catch(err => {
+            console.error(err);
+            btn.disabled = false;
+            btn.textContent = 'Submit Answer';
+        });
+    }
+
+    function showFeedback(data) {
+        const overlay = document.getElementById('feedback-overlay');
+        const icon = document.getElementById('feedback-icon');
+        const title = document.getElementById('feedback-title');
+        const text = document.getElementById('feedback-text');
+        const points = document.getElementById('feedback-points');
+        const card = document.getElementById('feedback-card');
+
+        if (data.status === 'correct') {
+            icon.textContent = '🎉';
+            title.textContent = 'Correct!';
+            card.className = 'feedback-card feedback-success';
+            points.textContent = `+${data.points_earned} points — Total: ${data.total_points}`;
+            document.getElementById('feedback-next-btn').style.display = 'inline-block';
+            document.getElementById('feedback-retry-btn').style.display = 'none';
+            document.getElementById('feedback-hint-btn').style.display = 'none';
+
+            if (data.next_chapter === null) {
+                document.getElementById('feedback-next-btn').textContent = '🏆 View Dashboard';
+                nextChapterUrl = '/dashboard';
+            } else {
+                nextChapterUrl = `/story/${storyId}/chapter/${data.next_chapter}`;
+            }
+        } else if (data.status === 'partial') {
+            icon.textContent = '🤔';
+            title.textContent = 'Almost There!';
+            card.className = 'feedback-card feedback-partial';
+            points.textContent = '';
+            document.getElementById('feedback-next-btn').style.display = 'none';
+            document.getElementById('feedback-retry-btn').style.display = 'inline-block';
+            document.getElementById('feedback-hint-btn').style.display = 'inline-block';
+        } else {
+            icon.textContent = '❌';
+            title.textContent = 'Not Quite!';
+            card.className = 'feedback-card feedback-fail';
+            points.textContent = '';
+            document.getElementById('feedback-next-btn').style.display = 'none';
+            document.getElementById('feedback-retry-btn').style.display = 'inline-block';
+            document.getElementById('feedback-hint-btn').style.display = 'inline-block';
+        }
+
+        text.textContent = data.feedback;
+        overlay.style.display = 'flex';
+    }
+
+    function goToNext() {
+        if (nextChapterUrl) {
+            window.location.href = nextChapterUrl;
+        }
+    }
+
+    function showHint() {
+        const text = document.getElementById('feedback-text');
+        text.textContent += '\n\n💡 Hint: ' + chapterHint;
+        document.getElementById('feedback-hint-btn').style.display = 'none';
+    }
+
+    function retryChapter() {
+        document.getElementById('feedback-overlay').style.display = 'none';
+        document.getElementById('submit-btn').disabled = false;
+        document.getElementById('submit-btn').textContent = 'Submit Answer';
+
+        const answerInput = document.getElementById('answer-input');
+        if (answerInput) answerInput.value = '';
+    }
+
+    function exitGame() {
+        document.getElementById('exit-overlay').style.display = 'flex';
+    }
+
+    function cancelExit() {
+        document.getElementById('exit-overlay').style.display = 'none';
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}QuestBreak AI — Break the Doomscroll{% endblock %}
+
+{% block content %}
+<div class="landing-page">
+    <div class="particle-bg" id="particles"></div>
+
+    <div class="landing-content">
+        <div class="logo-container">
+            <div class="logo-icon">⚡</div>
+            <h1 class="logo-text">Quest<span class="accent">Break</span></h1>
+            <p class="logo-tagline">AI-Powered Anti-Doomscrolling</p>
+        </div>
+
+        <div class="hero-card glass-card">
+            <h2>Break the scroll. Start the quest.</h2>
+            <p>Transform your endless scrolling into an epic adventure. Answer a short story-based questionnaire and unlock your personalized AI quest — with riddles, puzzles, and real-world challenges.</p>
+            
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <span class="feature-icon">🧠</span>
+                    <span class="feature-text">AI-Powered Challenges</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">📖</span>
+                    <span class="feature-text">4 Unique Story Arcs</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">📸</span>
+                    <span class="feature-text">Real-World Photo Tasks</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">🏆</span>
+                    <span class="feature-text">Dopamine Score System</span>
+                </div>
+            </div>
+
+            <a href="{{ url_for('questionnaire') }}" class="btn-primary" id="start-btn">
+                Begin Your Quest →
+            </a>
+        </div>
+
+        <div class="stories-preview">
+            <h3>Four Stories Await</h3>
+            <div class="story-cards">
+                <div class="story-preview-card glass-card">
+                    <span class="story-emoji">🏴‍☠️</span>
+                    <h4>The Lost Treasure of Captain Byte</h4>
+                    <p>Adventure & Exploration</p>
+                </div>
+                <div class="story-preview-card glass-card">
+                    <span class="story-emoji">🔮</span>
+                    <h4>The Enchanted Algorithm</h4>
+                    <p>Fantasy & Magic</p>
+                </div>
+                <div class="story-preview-card glass-card">
+                    <span class="story-emoji">🚀</span>
+                    <h4>Mission: Deep Space Rescue</h4>
+                    <p>Sci-Fi & Problem-Solving</p>
+                </div>
+                <div class="story-preview-card glass-card">
+                    <span class="story-emoji">🕵️</span>
+                    <h4>The Shadow Protocol</h4>
+                    <p>Espionage & Thriller</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

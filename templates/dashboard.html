@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}QuestBreak — Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-page">
+    <div class="dashboard-header">
+        <h1>🏆 Quest Complete!</h1>
+        <p>You've proven yourself, adventurer.</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card glass-card">
+            <div class="stat-icon">⚡</div>
+            <div class="stat-value" id="stat-points">{{ total_points }}</div>
+            <div class="stat-label">Dopamine Points</div>
+        </div>
+        <div class="stat-card glass-card">
+            <div class="stat-icon">📖</div>
+            <div class="stat-value" id="stat-chapters">{{ chapters_completed }}</div>
+            <div class="stat-label">Chapters Completed</div>
+        </div>
+        <div class="stat-card glass-card">
+            <div class="stat-icon">🎯</div>
+            <div class="stat-value" id="stat-accuracy">
+                {% if chapters_completed > 0 %}
+                    {{ (total_points / (chapters_completed * 30) * 100) | int }}%
+                {% else %}
+                    0%
+                {% endif %}
+            </div>
+            <div class="stat-label">Average Score</div>
+        </div>
+    </div>
+
+    <div class="dashboard-message glass-card">
+        <h2>You did something amazing.</h2>
+        <p>Instead of doomscrolling, you solved puzzles, explored stories, and even
+           connected with the real world around you. That's real progress.</p>
+        <p class="highlight-text">Every quest you complete rewires your brain
+           away from passive scrolling and towards active engagement.</p>
+    </div>
+
+    <div class="dashboard-actions">
+        {% if story_id %}
+        <a href="{{ url_for('story_start', story_id=story_id) }}" class="btn-secondary">
+            🔄 Replay Story
+        </a>
+        {% endif %}
+        <a href="{{ url_for('questionnaire') }}" class="btn-primary">
+            🆕 Try a New Story
+        </a>
+        <a href="{{ url_for('landing') }}" class="btn-secondary">
+            🏠 Home
+        </a>
+    </div>
+</div>
+{% endblock %}
