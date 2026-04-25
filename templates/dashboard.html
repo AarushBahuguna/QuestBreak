@@ -1,26 +1,27 @@
 {% extends "base.html" %}
 {% block title %}QuestBreak — Dashboard{% endblock %}
+{% block body_class %}{% if story_id %}theme-{{ story_id }}{% else %}theme-main{% endif %}{% endblock %}
 
 {% block content %}
 <div class="dashboard-page">
     <div class="dashboard-header">
-        <h1>🏆 Quest Complete!</h1>
+        <h1>Quest Complete!</h1>
         <p>You've proven yourself, adventurer.</p>
     </div>
 
     <div class="stats-grid">
         <div class="stat-card glass-card">
-            <div class="stat-icon">⚡</div>
+            <div class="stat-icon"></div>
             <div class="stat-value" id="stat-points">{{ total_points }}</div>
             <div class="stat-label">Dopamine Points</div>
         </div>
         <div class="stat-card glass-card">
-            <div class="stat-icon">📖</div>
+            <div class="stat-icon"></div>
             <div class="stat-value" id="stat-chapters">{{ chapters_completed }}</div>
             <div class="stat-label">Chapters Completed</div>
         </div>
         <div class="stat-card glass-card">
-            <div class="stat-icon">🎯</div>
+            <div class="stat-icon"></div>
             <div class="stat-value" id="stat-accuracy">
                 {% if chapters_completed > 0 %}
                     {{ (total_points / (chapters_completed * 30) * 100) | int }}%
@@ -43,14 +44,14 @@
     <div class="dashboard-actions">
         {% if story_id %}
         <a href="{{ url_for('story_start', story_id=story_id) }}" class="btn-secondary">
-            🔄 Replay Story
+            Replay Story
         </a>
         {% endif %}
         <a href="{{ url_for('questionnaire') }}" class="btn-primary">
-            🆕 Try a New Story
+            Try a New Story
         </a>
         <a href="{{ url_for('landing') }}" class="btn-secondary">
-            🏠 Home
+            Home
         </a>
     </div>
 </div>

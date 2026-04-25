@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}QuestBreak — Discover Your Story{% endblock %}
+{% block body_class %}theme-main{% endblock %}
 
 {% block content %}
 <div class="questionnaire-page">
@@ -43,7 +44,7 @@
     <!-- Result overlay -->
     <div class="result-overlay" id="result-overlay" style="display: none;">
         <div class="result-card glass-card">
-            <div class="result-emoji" id="result-emoji">🔮</div>
+            <div class="result-emoji" id="result-emoji"></div>
             <h2 id="result-title">Loading your destiny...</h2>
             <p id="result-description"></p>
             <a class="btn-primary" id="result-link" href="#">Enter Your Story →</a>
@@ -123,6 +124,16 @@
         })
         .then(r => r.json())
         .then(data => {
+            // Transition background to the assigned story theme
+            const themeMap = {
+                'adventure': 'theme-adventure',
+                'fantasy': 'theme-fantasy',
+                'scifi': 'theme-scifi',
+                'espionage': 'theme-espionage'
+            };
+            const newTheme = themeMap[data.story_id] || 'theme-main';
+            document.body.className = newTheme;
+
             document.getElementById('result-overlay').style.display = 'flex';
             document.getElementById('result-emoji').textContent = data.story_emoji;
             document.getElementById('result-title').textContent = data.story_title;

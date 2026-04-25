@@ -4,6 +4,4 @@ scipy
 scikit-learn
 imbalanced-learn
 tensorflow
-matplotlib
-opencv-python
 flask

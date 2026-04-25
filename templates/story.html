@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ story.title }} — Chapter: {{ chapter.title }}{% endblock %}
+{% block body_class %}theme-{{ story.id }}{% endblock %}
 
 {% block content %}
 <div class="story-page">
@@ -9,7 +10,7 @@
             <span class="story-title-sm">{{ story.title }}</span>
         </div>
         <div class="story-header-right">
-            <span class="points-badge">⚡ {{ total_points }} pts</span>
+            <span class="points-badge">{{ total_points }} pts</span>
             <button class="btn-exit" onclick="exitGame()" title="Exit Quest">✕ Exit</button>
         </div>
     </div>
@@ -17,7 +18,7 @@
     <!-- Exit confirmation modal -->
     <div class="exit-overlay" id="exit-overlay" style="display: none;">
         <div class="exit-card glass-card">
-            <div class="exit-icon">⚠️</div>
+            <div class="exit-icon"></div>
             <h2>Leave this quest?</h2>
             <p>Your progress for this chapter will be lost, but your earned points are saved.</p>
             <div class="exit-actions">
@@ -48,7 +49,7 @@
         </div>
 
         <div class="challenge-box">
-            <h3>🎯 Challenge</h3>
+            <h3>Challenge</h3>
             <p class="challenge-text">{{ chapter.challenge }}</p>
             <span class="points-label">+{{ chapter.points }} points</span>
         </div>
@@ -60,7 +61,7 @@
 
             {% if chapter.answer_type == "image" %}
             <div class="image-upload-area" id="upload-area">
-                <div class="upload-icon">📷</div>
+                <div class="upload-icon"></div>
                 <p>Click to upload a photo or drag & drop</p>
                 <input type="file" name="image" id="image-input" accept="image/*" capture="environment"
                        onchange="previewImage(this)">
@@ -85,7 +86,7 @@
         <!-- Feedback overlay -->
         <div class="feedback-overlay" id="feedback-overlay" style="display: none;">
             <div class="feedback-card" id="feedback-card">
-                <div class="feedback-icon" id="feedback-icon">✅</div>
+                <div class="feedback-icon" id="feedback-icon"></div>
                 <h2 id="feedback-title">Result</h2>
                 <p id="feedback-text"></p>
                 <div class="feedback-points" id="feedback-points"></div>
@@ -178,7 +179,7 @@
         const card = document.getElementById('feedback-card');
 
         if (data.status === 'correct') {
-            icon.textContent = '🎉';
+            icon.textContent = '';
             title.textContent = 'Correct!';
             card.className = 'feedback-card feedback-success';
             points.textContent = `+${data.points_earned} points — Total: ${data.total_points}`;
@@ -187,13 +188,13 @@
             document.getElementById('feedback-hint-btn').style.display = 'none';
 
             if (data.next_chapter === null) {
-                document.getElementById('feedback-next-btn').textContent = '🏆 View Dashboard';
+                document.getElementById('feedback-next-btn').textContent = 'View Dashboard';
                 nextChapterUrl = '/dashboard';
             } else {
                 nextChapterUrl = `/story/${storyId}/chapter/${data.next_chapter}`;
             }
         } else if (data.status === 'partial') {
-            icon.textContent = '🤔';
+            icon.textContent = '';
             title.textContent = 'Almost There!';
             card.className = 'feedback-card feedback-partial';
             points.textContent = '';
@@ -201,7 +202,7 @@
             document.getElementById('feedback-retry-btn').style.display = 'inline-block';
             document.getElementById('feedback-hint-btn').style.display = 'inline-block';
         } else {
-            icon.textContent = '❌';
+            icon.textContent = '';
             title.textContent = 'Not Quite!';
             card.className = 'feedback-card feedback-fail';
             points.textContent = '';
@@ -222,7 +223,7 @@
 
     function showHint() {
         const text = document.getElementById('feedback-text');
-        text.textContent += '\n\n💡 Hint: ' + chapterHint;
+        text.textContent += '\n\nHint: ' + chapterHint;
         document.getElementById('feedback-hint-btn').style.display = 'none';
     }
 
